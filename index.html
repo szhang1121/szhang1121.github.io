@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Susu Zhang</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column. Themes are sections, questions are set in serif, papers sit under the question they address. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #14213d;
+  --muted: #5a6577;
+  --line: #dde2ea;
+  --accent: #c2491a;
+  --accent-soft: #fde3d2;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151f; --surface: #171e2b; --ink: #e8ecf3; --muted: #9ba7b9;
+    --line: #2a3445; --accent: #ff9460; --accent-soft: #33221a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151f; --surface: #171e2b; --ink: #e8ecf3; --muted: #9ba7b9;
+  --line: #2a3445; --accent: #ff9460; --accent-soft: #33221a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: var(--accent-soft); }
+::selection { background: var(--accent-soft); color: var(--ink); }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 80px; }
+header p.name { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: 0.04em; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 500; font-size: 40px; line-height: 1.1; margin: 4px 0 24px; text-wrap: balance; }
+.lede { max-width: 65ch; color: var(--muted); margin: 0 0 28px; }
+.tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.tabs a { padding: 10px 14px; text-decoration: none; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+#theme-switch { align-self: center; cursor: pointer; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 999px; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; }
+#theme-switch:hover { color: var(--accent); border-color: var(--accent); }
+#theme-switch svg { width: 18px; height: 18px; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+.jump button, .also button { font: inherit; font-size: 13px; cursor: pointer; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+.jump button:hover, .also button:hover { border-color: var(--accent); }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+section.theme { margin-bottom: 44px; }
+section.theme > h2 { font-family: var(--display); font-weight: 500; font-size: 32px; line-height: 1.15; margin: 0 0 12px; padding-top: 8px; border-top: 2px solid var(--ink); }
+details.branch { margin: 14px 0 0; }
+details.branch > summary { cursor: pointer; font-weight: 600; font-size: 21px; line-height: 1.3; padding: 6px 0; list-style-position: outside; margin-left: 18px; }
+details.branch details.branch { margin-left: var(--step); }
+/* Every entry sits at the same left edge, the one used by the deepest subcategory */
+section.theme { --step: 18px; }
+section.theme > .q, section.theme > .extra,
+section.theme > details.branch > .q, section.theme > details.branch > .extra { margin-left: calc(2 * var(--step)); }
+details.branch details.branch > .q, details.branch details.branch > .extra { margin-left: var(--step); }
+details.branch details.branch > summary { font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: var(--accent); padding-bottom: 0; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; margin: 10px 0; scroll-margin-top: 16px; }
+.q.flash { border-color: var(--accent); background: var(--accent-soft); }
+.q h4 { font-family: var(--body); font-weight: 600; font-size: 17px; line-height: 1.35; margin: 0 0 10px; }
+.also { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin: -2px 0 12px; }
+.also button { background: var(--accent-soft); border-color: transparent; }
+.paper { border-top: 1px solid var(--line); padding: 10px 0; }
+.paper:last-child { padding-bottom: 0; }
+.cite { margin: 0; font-size: 15px; }
+.cite em { font-style: italic; }
+.fields { margin: 6px 0 8px; font-size: 15px; }
+.fields dt { font-weight: 600; font-size: 13px; letter-spacing: 0.03em; color: var(--muted); margin-top: 8px; }
+.fields dd { margin: 0; max-width: 65ch; }
+.pending { margin: 4px 0 8px; font-size: 14px; color: var(--muted); }
+.res h3 { font-size: 15px; font-weight: 600; margin: 18px 0 6px; }
+.res ul { margin: 0; padding-left: 18px; }
+.res li { margin: 6px 0; font-size: 14.5px; }
+.plink { display: inline-block; font-size: 12.5px; font-weight: 600; text-decoration: none; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 6px; margin-left: 4px; line-height: 1.5; }
+.plink:hover { background: var(--accent-soft); }
+.year { font-family: var(--display); font-size: 24px; font-weight: 500; margin: 26px 0 6px; font-variant-numeric: tabular-nums; }
+.yl { list-style: none; margin: 0; padding: 0; }
+.yl li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.chip { display: inline-block; margin-left: 4px; white-space: nowrap; line-height: 1.5; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; background: var(--surface); }
+.note { font-size: 13px; color: var(--muted); margin-top: 40px; border-top: 1px solid var(--line); padding-top: 12px; max-width: 65ch; }
+.extra { list-style: none; margin: 12px 0 0; padding: 0; font-size: 15px; }
+.extra li { padding: 8px 0; border-top: 1px solid var(--line); }
+.extra a { color: var(--accent); }
+.kind { display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; color: var(--accent); margin-right: 8px; }
+header.site { display: flex; align-items: center; gap: 20px; padding-bottom: 14px; margin-bottom: 36px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.brand { font-family: var(--display); font-size: 22px; font-weight: 500; color: var(--ink); text-decoration: none; margin-right: auto; }
+.sitenav { display: flex; gap: 4px; }
+.sitenav a { padding: 6px 12px; border-radius: 999px; text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px; }
+.sitenav a:hover { color: var(--ink); }
+.sitenav a[aria-current="page"] { color: var(--ink); background: var(--accent-soft); }
+.herotop { display: flex; align-items: center; gap: 24px; margin-bottom: 22px; }
+.herotop > div { flex: 1; min-width: 0; }
+@media (max-width: 560px) { .herotop { flex-direction: column; align-items: flex-start; gap: 14px; } }
+.headshot { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--line); }
+.herotop .role { margin-bottom: 0; }
+.hero h1 { font-size: 48px; margin: 0 0 8px; }
+.role { font-size: 17px; font-weight: 500; margin: 0 0 22px; color: var(--ink); }
+.lead { font-size: 17px; line-height: 1.6; max-width: 65ch; margin: 0 0 14px; }
+.block { margin-top: 48px; }
+.block.first { margin-top: 8px; }
+.block > h2 { font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.2; margin: 0 0 12px; padding-top: 8px; border-top: 2px solid var(--ink); }
+.block p { max-width: 65ch; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.directions { margin: 0 0 14px; padding-left: 20px; max-width: 65ch; }
+.directions li { margin: 8px 0; }
+.directions li::marker { color: var(--accent); }
+.more { display: inline-block; font-weight: 600; color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); }
+.grp { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); margin: 22px 0 10px; }
+.grants { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.grant { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; padding: 16px 18px; }
+.grant p { margin: 0; }
+.funder { font-weight: 600; font-size: 16px; line-height: 1.3; }
+.gtitle { font-size: 15px; margin-top: 6px !important; }
+.gmeta { font-size: 13.5px; color: var(--muted); margin-top: 8px !important; }
+.fine { font-size: 13px; color: var(--muted); margin-top: 16px; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.links a { font-size: 14px; font-weight: 500; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; }
+.links a:hover { border-color: var(--accent); color: var(--accent); }
+.course { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; margin: 12px 0; }
+.course h3 { font-size: 18px; font-weight: 600; margin: 0; }
+.course p { margin: 10px 0 0; font-size: 15px; }
+.course .gmeta { margin-top: 4px !important; }
+.topics { color: var(--muted); font-size: 14px !important; }
+.plain { list-style: none; margin: 0; padding: 0; max-width: 70ch; }
+.plain li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.plain a { color: var(--accent); }
+.foot { margin-top: 64px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+@media (max-width: 480px) { .hero h1 { font-size: 36px; } .grants { grid-template-columns: 1fr; } }
+.crumb { margin: 0 0 6px; font-size: 14px; }
+.crumb a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.crumb a::before { content: "\2039\00a0"; }
+.course h3 a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
+.course h3 a:hover { color: var(--accent); }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.mats { width: 100%; border-collapse: collapse; font-size: 15px; }
+.mats th { text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.mats td { padding: 9px 14px; border-top: 1px solid var(--line); }
+.mats tbody tr:first-child td { border-top: 0; }
+.mats .num, .mats .dates { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.mats a { color: var(--accent); font-weight: 500; text-decoration: none; white-space: nowrap; }
+.mats a:hover { text-decoration: underline; }
+[hidden] { display: none !important; }
+@media (max-width: 480px) { h1 { font-size: 32px; } .q { padding: 14px; } section.theme { --step: 8px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <a class="brand" href="#home">Susu Zhang</a>
+    <nav class="sitenav" aria-label="Site">
+      <a href="#home" id="nav-home">Home</a>
+      <a href="#research" id="nav-research">Research</a>
+      <a href="#teaching" id="nav-teaching">Teaching</a>
+    </nav>
+    <button type="button" id="theme-switch"></button>
+  </header>
+  <main>
+
+    <div id="page-home">
+      <section class="hero">
+        <div class="herotop">
+          <img class="headshot" alt="Susu Zhang" width="120" height="120" src="data:image/jpeg;base64,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">
+          <div>
+            <h1>Susu Zhang</h1>
+            <p class="role">Associate Professor, Departments of Psychology and Statistics<br>Faculty Affiliate, School of Information Sciences<br>Faculty Affiliate, Center for Social and Behavioral Science<br>University of Illinois Urbana-Champaign</p>
+          </div>
+        </div>
+        <p class="lead">I study how measurement theory and psychometrics can guide the assessment of both human (e.g., psychological traits, knowledge and skills) and machine (e.g., AI model capability). My research identifies practical questions in these domains that cannot be adequately addressed with existing statistical tools, and I develop new statistical tools that better address them.</p>
+        <p class="lead">I received my Ph.D. in quantitative psychology from Illinois in 2018 and was a postdoctoral research scientist in the Department of Statistics at Columbia University from 2018 to 2020.</p>
+      </section>
+
+      <section class="block">
+        <h2>Current research interests</h2>
+        <ul class="directions">
+          <li>Developing measurement theory and psychometric tools for unstructured test response data (e.g., process data, constructed responses)</li>
+          <li>Adapting LLMs to support development of measurement theory-grounded, evidence-centered assessments for learning (e.g., diagnostic assessments, simulation-based tasks)</li>
+          <li>Measurement theory and new psychometric tools for AI model evaluation and benchmark design</li>
+        </ul>
+        <p><a class="more" href="#research">Research by topic</a></p>
+      </section>
+
+      <section class="block">
+        <h2>Research support</h2>
+        <p class="sub">My research has been supported by the following organizations.</p>
+        <div class="grants">
+          <article class="grant">
+            <p class="funder">Schmidt Sciences</p>
+            <p class="gtitle">Creating Effective Benchmarks for LLMs with Human AI Collaboration</p>
+            <p class="gmeta">AI Safety Science grant &middot; Co-principal investigator &middot; 2025 to 2027</p>
+          </article>
+          <article class="grant">
+            <p class="funder">University of Illinois Campus Research Board</p>
+            <p class="gtitle">Improving Ability Estimation via Flexible Copula-Based Modeling of Item Responses and Response Times</p>
+            <p class="gmeta">Research Support Grant, Arnold Beckman Award designation &middot; Principal investigator &middot; 2025 to 2026</p>
+          </article>
+          <article class="grant">
+            <p class="funder">American Educational Research Association and National Science Foundation</p>
+            <p class="gtitle">Revision and Review Behavior in Large-Scale Computer-Based Assessments: An Analysis of NAEP Mathematics Process Data</p>
+            <p class="gmeta">AERA-NSF Small Research Grant &middot; Principal investigator &middot; 2023 to 2025</p>
+          </article>
+          <article class="grant">
+            <p class="funder">Institute of Education Sciences, U.S. Department of Education</p>
+            <p class="gtitle">Analysis of NAEP Mathematics Process, Outcome, and Survey Data to Understand Test-Taking Behavior and Mathematics Performance of Learners with Disabilities</p>
+            <p class="gmeta">Grant R324P230002 &middot; Co-principal investigator &middot; 2021 to 2024</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>Contact</h2>
+        <p>603 E. Daniel St., Champaign, IL 61820<br>szhan105 at illinois dot edu</p>
+        <p class="links">
+          <a href="https://scholar.google.com/citations?user=fzuM8BoAAAAJ">Google Scholar</a>
+          <a href="https://github.com/szhang1121">GitHub</a>
+          <a href="https://www.youtube.com/channel/UC_6lTHs2wtP3-QtVIc3QVwQ">YouTube</a>
+          <a href="https://psychology.illinois.edu/directory/profile/szhan105">Psychology profile</a>
+          <a href="https://stat.illinois.edu/directory/profile/szhan105">Statistics profile</a>
+        </p>
+      </section>
+    </div>
+
+    <div id="page-research" hidden>
+      <h1>Research</h1>
+      <nav class="tabs" aria-label="Views">
+        <a href="#research" id="tab-topics">By topic</a>
+        <a href="#research-by-year" id="tab-papers">By year</a>
+      </nav>
+      <div id="view-topics">
+        <div class="jump" id="jump"></div>
+        <div id="tree"></div>
+      </div>
+      <div id="view-papers" hidden></div>
+    </div>
+
+    <div id="page-teaching" hidden>
+      <h1>Teaching</h1>
+      <section class="block first">
+        <h2>Courses at Illinois</h2>
+        <article class="course">
+          <h3><a href="#stat-428">STAT 428: Statistical Computing</a></h3>
+          <p class="gmeta">Spring 2021, 2022, 2024 and 2025</p>
+          <p>Computer-intensive methods for statistical inference and parameter estimation, both frequentist and Bayesian. The course covers why and how the algorithms work and how to implement them in R.</p>
+          <p class="topics">Random variable generation &middot; Monte Carlo integration and inference &middot; Bootstrap and permutation tests &middot; Markov chain Monte Carlo &middot; Nonlinear optimization and numerical integration &middot; The EM algorithm</p>
+          <p class="links">
+            <a href="#stat-428">Course page and materials</a>
+          </p>
+        </article>
+        <article class="course">
+          <h3><a href="#psyc-490">PSYC 490: Measurement and Test Development Lab</a></h3>
+          <p class="gmeta">Fall 2020, 2022 and 2023</p>
+          <p>The theory and practice of building reliable and valid measurement instruments, with an emphasis on the statistical methods behind them.</p>
+          <p class="topics">Reliability and validity &middot; Classical test theory and item response theory &middot; Item analysis, equating and scaling &middot; Adaptive testing &middot; Cognitive diagnosis &middot; Detection of noneffortful responses &middot; Automated scoring</p>
+          <p class="links">
+            <a href="#psyc-490">Course page and materials</a>
+          </p>
+        </article>
+        <article class="course">
+          <h3>STAT 410: Statistics and Probability II</h3>
+          <p class="gmeta">Fall 2025</p>
+        </article>
+        <article class="course">
+          <h3>PSYC 593: Seminar on Statistical Learning for Behavioral Data</h3>
+          <p class="gmeta">Spring 2023</p>
+        </article>
+      </section>
+    </div>
+
+    <div id="page-stat-428" hidden>
+      <p class="crumb"><a href="#teaching">Teaching</a></p>
+      <h1>STAT 428: Statistical Computing</h1>
+      <p class="role">Instructor: Susu Zhang (szhan105 at illinois dot edu)</p>
+      <p class="links">
+        <a href="https://canvas.illinois.edu/courses/44269">Canvas</a>
+        <a href="https://drive.google.com/file/d/1t2TmVHD3aJIjP00NVHubPtMglkkc9H5X/view?usp=drive_link">Syllabus (1/16/2024)</a>
+      </p>
+      <section class="block">
+        <h2>Course description</h2>
+        <p>Statistical computing uses computer-intensive methods to address statistical problems. These methods support statistical inference and parameter estimation, both frequentist and Bayesian. The course explains why and how the algorithms work, with examples, and how to implement them in R.</p>
+        <ul class="directions">
+          <li>Random variable generation</li>
+          <li>Monte Carlo integration and inference</li>
+          <li>Resampling methods (bootstrap, permutation tests)</li>
+          <li>Markov chain Monte Carlo (MCMC)</li>
+          <li>Numerical analysis tools (nonlinear equation solving, optimization, numerical integration)</li>
+          <li>The expectation-maximization (EM) algorithm</li>
+        </ul>
+      </section>
+      <section class="block">
+        <h2>Lecture materials</h2>
+        <p class="sub">Spring 2024</p>
+        <div class="tablewrap">
+          <table class="mats">
+            <thead><tr><th>Week</th><th>Dates</th><th>Topic</th><th>Slides</th><th>R script</th></tr></thead>
+            <tbody>
+            <tr><td class="num">1</td><td class="dates">1/17 to 1/21</td><td>Random variable generation, part I</td><td><a href="https://drive.google.com/file/d/1qpboi3FajmaC38NUi9caJpghVq8jkvjc/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1Shqb73ajPW8dOaQ-6joon-9dDDsHXUDW/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">2</td><td class="dates">1/22 to 1/29</td><td>Random variable generation, part II</td><td><a href="https://drive.google.com/file/d/1azpVQdr3HzcvviqDV3NIsNPs1lVpvZoT/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/12ZpApPV5i6MdHFbAnJ89m7p-fNjaota1/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">3</td><td class="dates">1/31 to 2/4</td><td>Monte Carlo integration, part I</td><td><a href="https://drive.google.com/file/d/1qUTdZ0ZCoMnK7sbQ_L_vuCAxpWqIuv3R/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1-DHbTNHM9c6NDqwJlX0IRuNtBtS1a9ox/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">4</td><td class="dates">2/5 to 2/11</td><td>Monte Carlo integration, part II</td><td><a href="https://drive.google.com/file/d/1nOsp1utgLMj4yBe99vqu9G0ZgRBO58Q8/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1seHtXw7uH6HJZ-71jGbKIk-59QtoIlCe/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">5</td><td class="dates">2/12 to 2/14</td><td>Monte Carlo inference, part I</td><td><a href="https://drive.google.com/file/d/1a78Z_338P8xK2wvv7-l-l-htfq9W41d1/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1RQkuFDFOPAm5oUchSuT9mqeznmbdykyc/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">6</td><td class="dates">2/16 to 2/26</td><td>Monte Carlo inference, part II</td><td><a href="https://drive.google.com/file/d/1ONkRPxs2OxKOlpbzSooagqeZ0gbpWjYx/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/17HE8bcleC403dSVXmujI6qsJ_n3DdxXv/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">7</td><td class="dates">2/28 to 3/1</td><td>Resampling, part I</td><td><a href="https://drive.google.com/file/d/18K6OF_DtTU1U5CksUsQ_dnJuSd6Cgen8/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/16SQ-Nes5It3E0WmnduSqYG9n8h-weYns/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">8</td><td class="dates">3/4 to 3/10</td><td>Resampling, part II</td><td><a href="https://drive.google.com/file/d/1Fd1gVEj50J5SIoaUfetOLlhSVVPKJPLh/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/15v2VbTL1Ns9d22JDxlYlUSmXY4Fn4tkH/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">9</td><td class="dates">3/20 to 3/22</td><td>Resampling, part III</td><td><a href="https://drive.google.com/file/d/1CCVEjifdCWBKBeFnOmsd2tqGqt2YqCrZ/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1un8EBKMdut-tVgPJ3tRR_QVh25CGsP_U/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">10</td><td class="dates">3/25 to 3/29</td><td>MCMC, part I</td><td><a href="https://drive.google.com/file/d/1HgBfm4HNU5p7f3n3NfzUN9eQBEy77E2h/view?usp=drive_link">Slides</a></td><td></td></tr>
+            <tr><td class="num">11</td><td class="dates">4/5 to 4/8</td><td>MCMC, part II</td><td><a href="https://drive.google.com/file/d/1pIR9RPi2CKF0I7gMPwaLqEgEFyk9VC1U/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1xC55D67L8M97GB6LOedcbUDPT8HQ4p-B/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">12</td><td class="dates">4/10 to 4/15</td><td>MCMC, part III</td><td><a href="https://drive.google.com/file/d/1QdchQwZz3Y4tT1Z91IY_431fXNlrCeCU/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1gl3b4w1DlJ_fSjnn87v5F9TWVNVXnBz7/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">13</td><td class="dates">4/17 to 4/24</td><td>Nonlinear optimization</td><td><a href="https://drive.google.com/file/d/15mc_9bWRYSH5vcGq6AvpMvsmP920wFb6/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1-3xDtXKfI6voqtZ4N7DoFCQ1lmEbIa_i/view?usp=drive_link">R script</a></td></tr>
+            <tr><td class="num">14</td><td class="dates">4/26 to 4/29</td><td>EM algorithm</td><td><a href="https://drive.google.com/file/d/1b6PY9gDr0h2YtCVK4l9xKstFzk1-9LZX/view?usp=drive_link">Slides</a></td><td><a href="https://drive.google.com/file/d/1Cl9lU-b9lqRsCMDh6nkyBwfWf27ALcD9/view?usp=drive_link">R script</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="block">
+        <h2>Legacy recordings</h2>
+        <p>Recordings from spring 2021, when the course was taught asynchronously. Some materials and examples have been updated since, but the clips are broken into short topics and can serve as a reference.</p>
+        <p class="links"><a href="https://www.youtube.com/playlist?list=PLZFqRvVkzC3cA8qAsWp-VhU4PfTzSGNit">YouTube playlist</a></p>
+      </section>
+      <p class="fine">Last updated spring 2024.</p>
+    </div>
+
+    <div id="page-psyc-490" hidden>
+      <p class="crumb"><a href="#teaching">Teaching</a></p>
+      <h1>PSYC 490: Measurement and Test Development Lab</h1>
+      <p class="role">Instructor: Susu Zhang (szhan105 at illinois dot edu)<br>Teaching assistant: Sunbeom Kwon</p>
+      <p class="links">
+        <a href="https://learn.illinois.edu/">Learn@Illinois</a>
+        <a href="https://drive.google.com/file/d/1ujc93xrUUtEHIEzqL4Su56r7PaCgdHnH/view?usp=drive_link">Syllabus (8/21/2023)</a>
+      </p>
+      <section class="block">
+        <h2>Course description</h2>
+        <p>Measurement assigns numbers to individuals to represent cognitive and noncognitive properties, such as abilities, progress, attitudes and personality. Developing reliable and valid instruments is central to measurement theory, which overlaps with psychometrics. Measurement places more weight on concepts and tasks, and psychometrics on statistical methods.</p>
+      </section>
+      <section class="block">
+        <h2>Covered topics</h2>
+        <ul class="directions">
+          <li>Fundamental concepts: reliability and validity</li>
+          <li>Psychometric theories: classical test theory and item response theory</li>
+          <li>Test construction and evaluation: item analysis, equating and scaling</li>
+          <li>Practical topics: adaptive testing, cognitive diagnosis, detection of noneffortful responses and automated scoring</li>
+        </ul>
+      </section>
+      <section class="block">
+        <h2>Lab sessions</h2>
+        <p>Lab handouts are collected in an R book.</p>
+        <p class="links"><a href="https://bookdown.org/sz_psyc490/r4psychometics/">R lab book</a></p>
+      </section>
+      <section class="block">
+        <h2>Is this course right for you?</h2>
+        <p>This course focuses on measurement, not on assessment design, and is statistics heavy.</p>
+      </section>
+      <p class="fine">Last updated fall 2023.</p>
+    </div>
+
+  </main>
+  <footer class="foot">Susu Zhang &middot; University of Illinois Urbana-Champaign</footer>
+</div>
+
+<script>
+/* ---------- Papers: one record each (citation, link, take-home message, key to the approach). ---------- */
+const D = "https://doi.org/";
+const papers = {
+  acc22: { cite: "Zhang, S., Wang, Z., Qi, J., Liu, J., & Ying, Z. (2022). Accurate assessment via process data. <em>Psychometrika</em>.", url: D + "10.1007/s11336-022-09880-8",
+    takehome: "Adding information from the problem-solving process to scores based on final responses reduces the mean squared error of ability estimates. This is shown in theory, in simulation and with empirical data.",
+    approach: "Features extracted from action sequences are summarized into sufficient statistics, and the response-based ability estimate is refined by conditioning on them (Rao-Blackwellization)." },
+  dif26: { cite: "Chen, L., Zhang, S., & Liu, J. (2026). Reducing differential item functioning via process data. <em>Psychometrika</em>.", url: D + "10.1017/psy.2025.10072",
+    takehome: "Process data can be used to reduce differential item functioning and to help understand it, in addition to detecting it. The method is demonstrated in simulations and on 13 problem-solving items from PIAAC 2012.",
+    approach: "Process features are used to construct a surrogate for the nuisance trait, and a new scoring rule within generalized linear models accounts for it alongside the target trait." },
+  med25: { cite: "Kwon, S., & Zhang, S. (2025). Explaining performance gaps with problem-solving process data via latent class mediation analysis. <em>Psychometrika</em>.", url: D + "10.1017/psy.2025.10038",
+    takehome: "Latent classes of test-taking behavior can serve as a mediator between group membership and item performance. The method is applied to the NAEP mathematics gap between students with learning disabilities and their peers.",
+    approach: "A latent class mediation model uses continuous process features as class indicators, with a headlong search that selects the feature subset maximizing the total indirect effect." },
+  rev23: { cite: "Zhang, S., Li, A., & Wang, S. (2023). Exploration of latent structure in test revision and review log data. <em>Educational Measurement: Issues and Practice</em>.", url: D + "10.1111/emip.12576",
+    takehome: "Revision logs from computer-based classroom tests show common prototypes of revisit and answer-change behavior, and this behavior relates to item, test and examinee characteristics.",
+    approach: "Statistical learning methods for sequence data summarize the variable-length revision logs, and a Bayesian multivariate generalized linear mixed model relates revision behavior to covariates." },
+  bic24: { cite: "Xu, X., Zhang, S., Guo, J., & Xin, T. (2024). Biclustering of log data: Insights from a computer-based complex problem solving assessment. <em>Journal of Intelligence</em>.", url: D + "10.3390/jintelligence12010010",
+    takehome: "Biclustering finds groups of test takers who are similar on only a subset of process features, which gives a finer view of problem-solving patterns than one-mode clustering. Adding timing features aided interpretation of action sequences and scores.",
+    approach: "Biclustering algorithms classify test takers and log-file features at the same time, applied to the Ticket task in the PISA 2012 problem-solving assessment." },
+  ext24: { cite: "Zhang, S., Tang, X., He, Q., Liu, J., & Ying, Z. (2024). External correlates of adult digital problem-solving process: An empirical analysis of PIAAC PSTRE action sequences. <em>Zeitschrift für Psychologie</em>.", url: D + "10.1027/2151-2604/a000554",
+    takehome: "In PIAAC 2012, features extracted from action sequences were more predictive of adults' demographic and cognitive characteristics than final item outcomes were.",
+    approach: "Multidimensional scaling and sequence-to-sequence autoencoders convert raw action sequences into numerical features. Regularized regression and partial least squares relate the features to external variables." },
+  yan26: { cite: "Yan, Z., Sylvara, A., Xiao, Z., Zhang, S., & Sun, T. (2026). Optimizing open-ended interview assessment using response-based semantic indices. <em>Assessment</em>." },
+  cen21: { cite: "Guo, J., Xu, X., Ying, Z., & Zhang, S. (2021). Modeling not-reached items in timed tests: A response time censoring approach. <em>Psychometrika</em>.", url: D + "10.1007/s11336-021-09810-0",
+    takehome: "Not-reached items can be treated as response times censored by the test time limit, so the missingness mechanism enters the likelihood directly.",
+    approach: "The censoring mechanism is built into the observed likelihood of responses and response times. A marginal maximum likelihood estimator is proposed and its asymptotic properties are established." },
+  cr25:  { cite: "Guo, J., Xu, X., Fang, G., Ying, Z., & Zhang, S. (2025). Jointly modeling responses and omitted items by a competing risk model: A survival analysis approach. <em>British Journal of Mathematical and Statistical Psychology</em>.", url: D + "10.1111/bmsp.12382",
+    takehome: "Item omission can be modeled as a competition between the response time and a latent omission time, which gives a properly constructed likelihood for answered and omitted items.",
+    approach: "A competing risk formulation from survival analysis, in which the omission time plays the role of the censoring time. Estimation uses the expectation-maximization algorithm." },
+  onr25: { cite: "Guo, J., Xu, X., & Zhang, S. (2025). Jointly modeling omitted and not-reached items in time-limit tests: A survival analysis approach. <em>Journal of Educational and Behavioral Statistics</em>.", url: D + "10.3102/10769986251380892",
+    takehome: "In simulations, only the method that accounted for both omitted and not-reached items recovered the model parameters well.",
+    approach: "A joint survival model of responses, response times and omission times. Not-reached items arise from right censoring of response times, and omissions arise from the competition between response time and omission time." },
+  uli24: { cite: "Ulitzsch, E., Zhang, S., & Pohl, S. (2024). A model-based approach to the disentanglement and differential treatment of engaged and disengaged item omissions. <em>Multivariate Behavioral Research</em>.", url: D + "10.1080/00273171.2024.2307518",
+    takehome: "Omissions that stem from disengagement can be separated from omissions that follow solution behavior without a clear-cut classification, and the two types can then be handled differently.",
+    approach: "A mixture model based on response times that lets the omission mechanism vary by item and examinee and carries the classification uncertainty forward." },
+  du22:  { cite: "Du, Y., Zhang, S., & Chang, H.-H. (2022). Compromised item detection: A Bayesian change-point perspective. <em>British Journal of Mathematical and Statistical Psychology</em>.", url: D + "10.1111/bmsp.12286",
+    takehome: "A Bayesian change-point framework detects when each item changes from uncompromised to compromised, both retrospectively and in real time. It showed higher detection accuracy and efficiency than the cumulative sum procedure.",
+    approach: "Phase I fits a Bayesian change-point model to observed responses. Phase II applies the Shiryaev sequential procedure with the post-change model for real-time monitoring." },
+  du24:  { cite: "Du, Y., & Zhang, S. (2024). Detecting compromised items with response times using a Bayesian change-point approach. <em>Journal of Educational and Behavioral Statistics</em>.", url: D + "10.3102/10769986241290713",
+    takehome: "Adding response times to responses improved both the accuracy and the efficiency of compromised item detection in continuous testing.",
+    approach: "A two-phase Bayesian change-point method that integrates responses and response times and is designed for iterative use." },
+  cop26: { cite: "Kwon, S., & Zhang, S. (2026). A copula-based joint model for speed and accuracy. <em>Psychometrika</em>.", url: D + "10.1017/psy.2026.10143",
+    takehome: "Relaxing the multivariate normality assumption for latent ability and speed improved ability estimation in simulations and model fit in several empirical data sets.",
+    approach: "The joint distribution of the latent traits is defined by a copula with tail dependence, estimated with an expectation-maximization algorithm with stochastic approximation." },
+  j18:   { cite: "Wang, S., Zhang, S., Douglas, J. A., & Culpepper, S. A. (2018). Using response times to assess learning progress: A joint model for responses and response times. <em>Measurement: Interdisciplinary Research and Perspectives</em>.", url: D + "10.1080/15366367.2018.1435105",
+    takehome: "Response times collected during learning provide diagnostic information on fluency in applying mastered skills, in addition to skill mastery.",
+    approach: "Changes in response times are modeled together with a higher-order hidden Markov diagnostic classification model, evaluated with a computer-based learning system for spatial skills." },
+  j19:   { cite: "Wang, S., Zhang, S., & Shen, Y. (2019). A joint modeling framework of responses and response times to assess learning outcomes. <em>Multivariate Behavioral Research</em>.", url: D + "10.1080/00273171.2019.1607238",
+    takehome: "A general framework tracks skill acquisition and the change in latent speed during learning at the same time.",
+    approach: "A dynamic response model for attribute transitions and a dynamic response time model are connected through a parameter for the rate of change in latent speed and a covariate defined from the attribute profile. Estimation is Bayesian." },
+  mix18: { cite: "Zhang, S., & Wang, S. (2018). Modeling learner heterogeneity: A mixture learning model with responses and response times. <em>Frontiers in Psychology</em>.", url: D + "10.3389/fpsyg.2018.02339",
+    takehome: "Learners differ in how they learn, and a mixture model that uses both response accuracy and response times can account for this heterogeneity.",
+    approach: "A mixture learning model with a Bayesian estimation framework, fitted to data from a computer-based learning system for spatial rotation skills." },
+  hmm19: { cite: "Zhang, S., & Chang, H.-H. (2019). A multilevel logistic hidden Markov model for learning under cognitive diagnosis. <em>Behavior Research Methods</em>.", url: D + "10.3758/s13428-019-01238-w",
+    takehome: "The probability of acquiring a skill is modeled as depending on the learner's mastery of other skills and on the effectiveness of the specific learning tool used, which is the information needed to select learning content adaptively.",
+    approach: "A multilevel logistic hidden Markov model built on cognitive diagnosis models, with random slopes and intercepts for each learning tool. Estimation is Bayesian, by MCMC." },
+  tes24: { cite: "Xu, X., Fang, G., Guo, J., Ying, Z., & Zhang, S. (2024). Diagnostic classification models for testlets: Methods and theory. <em>Psychometrika</em>.", url: D + "10.1007/s11336-024-09962-9",
+    takehome: "The testlet DINA model is extended to allow correlation between attribute profiles and testlet effects. Sufficient conditions for identifiability are given, which also establish identifiability of the standard testlet DINA model. Fit improved substantially on PISA 2015 data.",
+    approach: "The model treats testlet-based diagnostic data as a superposition of two latent structures, the attribute profile and the testlet effect, and identifiability is studied for the resulting model." },
+  qm26:  { cite: "Zhang, S., & Rao, V. N. V. (2026). CDM Q-matrix discovery with LLMs: Fusing domain knowledge with empirical evidence. <em>Proceedings of the Artificial Intelligence in Measurement and Education Conference (AIME-Con): Works in Progress</em>.", url: "https://aclanthology.org/2026.aimecon-wip.29/",
+    takehome: "Q-matrix specification can combine an LLM's reading of item content with model-based empirical validation against response data.",
+    approach: "An LLM generates an initial Q-matrix from item content, and response data guide its refinement." },
+  bif20: { cite: "Fang, G., Guo, J., Xu, X., Ying, Z., & Zhang, S. (2020). Identifiability of bifactor models. <em>Statistica Sinica</em>.", url: D + "10.5705/ss.202020.0386",
+    takehome: "Bifactor models can be non-identifiable. The paper gives a relatively complete characterization of identifiability for linear and dichotomous bifactor models, the linear extended bifactor model with correlated subdimensions, and two-tier models.",
+    approach: "The conditions are stated in terms of the factor loading structure, so identifiability can be checked by inspecting it." },
+  fpl21: { cite: "Fu, Z., Zhang, S., Su, Y.-H., Shi, N., & Tao, J. (2021). A Gibbs sampler for the multidimensional four-parameter logistic item response model via a data augmentation scheme. <em>British Journal of Mathematical and Statistical Psychology</em>.", url: D + "10.1111/bmsp.12234",
+    takehome: "The multidimensional four-parameter logistic model can be estimated with an easily implemented Gibbs sampler, available in the open-source IRTlogit package.",
+    approach: "A data augmentation scheme introduces three continuous latent variables, which makes the full conditional distributions tractable." },
+  mc24:  { cite: "Kwon, S., Zhang, S., Köhn, H. F., & Zhang, B. (2024). MCMC stopping rules in latent variable modelling. <em>British Journal of Mathematical and Statistical Psychology</em>.", url: D + "10.1111/bmsp.12357",
+    takehome: "In simulations, single-chain stopping rules gave more accurate item parameter estimates than multiple-chain rules, while the effect on person parameter estimates was small. Relying only on the univariate potential scale reduction factor can stop the sampler too early.",
+    approach: "A simulation comparison of four stopping rules (potential scale reduction factor, fixed-width, Geweke's diagnostic and effective sample size) under the DINA model and the bifactor item response model." },
+  nlg23: { cite: "Xiao, Z., Zhang, S., Lai, V., & Liao, Q. V. (2023). Evaluating evaluation metrics: A framework for analyzing NLG evaluation metrics using measurement theory. <em>Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</em>.", url: D + "10.18653/v1/2023.emnlp-main.676",
+    takehome: "Reliability and validity concepts from measurement theory give a systematic way to evaluate NLG metrics. Applied to summarization metrics, the analysis identified a conflated validity structure in human evaluation and reliability issues in LLM-based metrics.",
+    approach: "The MetricEval framework formalizes the sources of measurement error and provides statistical tools for assessing metric reliability and validity from empirical data." },
+  irt26: { cite: "Jiang, H., Kwon, S., Luo, J., Xiao, Z., & Zhang, S. (2026). Can we trust item response theory for AI evaluation? <em>Advances in Neural Information Processing Systems</em>.", url: "https://arxiv.org/abs/2607.15190",
+    takehome: "AI benchmark data differ from human testing data: fewer test takers, far more items and capability distributions that may not be normal. Classical estimators can become computationally infeasible for large benchmarks, and scalable estimators can give unreliable item-level and ranking inferences when the set of models is small or non-normally distributed.",
+    approach: "Response matrices are simulated from item parameters and capability distributions of six LLM benchmarks under three item response models. Marginal maximum likelihood, MCMC, variational inference and a neural estimator are compared across 18,000 runs." },
+  itm26: { cite: "Jiang, H., Zhang, S., Zhu, D., Bai, Y., Truong, S. T., Yi, X., Xie, X., Koyejo, S., & Xiao, Z. (2026). AI evaluation should require standardized item-level data releases. <em>Advances in Neural Information Processing Systems</em>.", url: "https://arxiv.org/abs/2604.03244",
+    takehome: "A position paper arguing that standardized item-level data release should be the default for AI evaluation, because validity claims cannot be assessed from aggregate scores alone.",
+    approach: "The argument is supported with OpenEval, a repository of more than 10.7 million responses across more than 160,000 benchmark items under a unified schema, used to identify low-quality items and recover validity evidence." },
+  zly22: { cite: "Zhang, S., Liu, J., & Ying, Z. (2022). Statistical applications to cognitive diagnostic testing. <em>Annual Review of Statistics and Its Application</em>.", url: D + "10.1146/annurev-statistics-033021-111803" },
+  cwz20: { cite: "Chang, H.-H., Wang, C., & Zhang, S. (2020). Statistical applications in educational measurement. <em>Annual Review of Statistics and Its Application</em>.", url: D + "10.1146/annurev-statistics-042720-104044" },
+  mod26: { cite: "Zhang, S., He, Q., & Kwon, S. (2026). Digital Module 41: Process data. <em>Educational Measurement: Issues and Practice</em>.", url: D + "10.1111/emip.70030" },
+  irw25: { cite: "Domingue, B. W., Braginsky, M., Caffrey-Maffei, L., Gilbert, J. B., Kanopka, K., Kapoor, R., Lee, H., Liu, Y., Nadela, S., Pan, G., Zhang, L., Zhang, S., & Frank, M. C. (2025). An introduction to the Item Response Warehouse (IRW): A resource for enhancing data usage in psychometrics. <em>Behavior Research Methods</em>.", url: D + "10.3758/s13428-025-02796-y" },
+  pd21:  { cite: "Tang, X., Zhang, S., Wang, Z., Liu, J., & Ying, Z. (2021). ProcData: An R package for process data analysis. <em>Psychometrika</em>.", url: D + "10.1007/s11336-021-09798-7" },
+
+  /* Papers listed in the by-year view only */
+  eye26:  { cite: "Fang, L., Wang, S., Chen, Y., Zhang, S., Liu, Z., & Zhong, W. (2026). Analyzing complex educational data: A data analytic framework for integrating structured and unstructured eye-tracking data. <em>Psychometrika</em>.", url: D + "10.1017/psy.2026.10096" },
+  wei25:  { cite: "Wei, X., Zhang, S., & Zhang, J. (2025). Digital pencil usage and mathematics performance among students with learning disabilities and their general education peers. <em>Journal of Special Education Technology</em>.", url: D + "10.1177/01626434251314041" },
+  mxml25: { cite: "Zheng, Y., Huang, S., Nydick, S., & Zhang, S. (2025). MxML (Exploring the relationship between measurement and machine learning): Survey of the measurement community. <em>Chinese/English Journal of Educational Measurement and Evaluation</em>.", url: D + "10.59863/GVZE8492" },
+  mxml24: { cite: "Zheng, Y., Nydick, S., Huang, S., & Zhang, S. (2024). MxML (Exploring the relationship between measurement and machine learning): Current state of the field. <em>Educational Measurement: Issues and Practice</em>.", url: D + "10.1111/emip.12593" },
+  wei24:  { cite: "Wei, X., Zhang, S., & Zhang, J. (2024). Identifying student profiles in a digital mental rotation task: Insights from the 2017 NAEP math assessment. <em>Frontiers in Education</em>.", url: D + "10.3389/feduc.2024.1423602" },
+  hub24:  { cite: "Hubert, L., & Zhang, S. (2024). Whence principal components? In E. J. Beh, R. Lombardo, & J. G. Clavel (Eds.), <em>Analysis of Categorical Data from Historical Perspectives: Essays in Honour of Shizuhiko Nishisato</em>." },
+  wei23b: { cite: "Wei, X., & Zhang, S. (2023). Extended time accommodation and the academic, behavioral, and psychological outcomes of students with learning disabilities. <em>Journal of Learning Disabilities</em>.", url: D + "10.1177/00222194231195624" },
+  wei23a: { cite: "Wei, X., Zhang, S., & Zhang, J. (2023). Mathematics performance, response time, and enjoyment of eighth-grade autistic students and their general education peers. <em>Autism</em>.", url: D + "10.1177/13623613231168241" },
+  gtum23: { cite: "Zhang, B., Tu, N., Angrave, L., Zhang, S., Sun, T., & Li, J. (2023). The Generalized Thurstonian Unfolding Model (GTUM): Advancing the modeling of forced-choice data. <em>Organizational Research Methods</em>.", url: D + "10.1177/10944281231210481" },
+  aug23:  { cite: "Zhang, B., Luo, J., Zhang, S., Sun, T., & Zhang, D. (2023). Improving the statistical performance of oblique bifactor measurement and predictive models: An augmentation approach. <em>Structural Equation Modeling: A Multidisciplinary Journal</em>.", url: D + "10.1080/10705511.2023.2222229" },
+  res21:  { cite: "Zhang, S., Bergner, Y., DiTrapani, J., & Jeon, M. (2021). Modeling the interaction between resilience and ability in assessments with allowances for multiple attempts. <em>Computers in Human Behavior</em>.", url: D + "10.1016/j.chb.2021.106847" },
+  resc20: { cite: "Rescorla, L. A., Jordan, P., Zhang, S., Baelen-King, G., Althoff, R. R., Ivanova, M. Y., & International ASEBA Consortium. (2020). Latent class analysis of the CBCL dysregulation profile for 6- to 16-year-olds in 29 societies. <em>Journal of Clinical Child and Adolescent Psychology</em>.", url: D + "10.1080/15374416.2019.1697929" },
+  rrum18: { cite: "Zhang, S., Douglas, J. A., Wang, S., & Culpepper, S. A. (2018). Reduced reparameterized unified model applied to learning spatial rotation skills. In M. von Davier & Y.-S. Lee (Eds.), <em>Handbook of Diagnostic Classification Models</em>.", url: D + "10.1007/978-3-030-05584-4_24" },
+  zc17:   { cite: "Zhang, S., & Chang, H.-H. (2017). From smart testing to smart learning: How testing technology can assist the new generation of education. <em>International Journal of Smart Technology and Learning</em>." },
+  kang17: { cite: "Kang, H.-A., Zhang, S., & Chang, H.-H. (2017). Dual-objective item selection criteria in cognitive diagnostic computerized adaptive testing. <em>Journal of Educational Measurement</em>.", url: D + "10.1111/jedm.12139" }
+};
+
+/* ---------- Items: one record per contribution, pointing to its papers. ---------- */
+const items = {
+  acc:    ["acc22"],
+  dif:    ["dif26"],
+  gaps:   ["med25"],
+  patt:   ["rev23", "bic24", "ext24"],
+  intv:   ["yan26"],
+  miss:   ["cen21", "cr25", "onr25", "uli24"],
+  sec22:  ["du22"],
+  sec24:  ["du24"],
+  speed:  ["cop26"],
+  rtlearn:["j18", "j19", "mix18"],
+  hmm:    ["hmm19"],
+  testlet:["tes24"],
+  qmat:   ["qm26"],
+  bif:    ["bif20"],
+  fpl:    ["fpl21"],
+  mcmc:   ["mc24"],
+  nlg:    ["nlg23"],
+  irtai:  ["irt26"],
+  release:["itm26"],
+  eye:    ["eye26"]
+};
+
+/* ---------- Tree ----------
+   list:  [item key, wording shown in this branch]. An item key may appear in more than one branch.
+   extra: software, tutorials and reviews that belong to the branch. */
+const tree = [
+  { id: "open", title: "Measurement with unstructured data", children: [
+    { id: "log", title: "Log data from the test-taking process",
+      list: [
+        ["acc",  "Improving the accuracy of ability estimates"],
+        ["dif",  "Reducing and explaining differential item functioning"],
+        ["gaps", "Identifying test-taking behaviors that explain performance gaps"],
+        ["patt", "Uncovering behavioral patterns and their relation to respondent and test characteristics"]
+      ],
+      extra: [
+        { kind: "Software", pid: "pd21", html: "<a href=\"https://github.com/xytangtang/ProcData\">ProcData</a>, an R package for exploratory process data analysis." },
+        { kind: "Tutorial", pid: "mod26", html: "<a href=\"https://ncme.org/resources/professional-learning/items/module-41-process-data/\">ITEMS Digital Module 41: Process Data</a>, on the NCME website." },
+        { kind: "Media coverage", html: "<a href=\"https://ies.ed.gov/learn/blog/hidden-gap-students-have-tools-do-they-know-how-use-them\">The hidden gap: Students have tools, but do they know how to use them?</a> Institute of Education Sciences, National Center for Special Education Research blog, April 13, 2026." },
+        { kind: "Media coverage", html: "<a href=\"https://members.nces.ed.gov/blogs/research/post/what-we-are-learning-from-naep-data-about-use-of-extended-time-accommodations\">What we are learning from NAEP data about use of extended time accommodations.</a> National Center for Special Education Research blog, January 30, 2024." }
+      ]},
+    { id: "cr", title: "Open-ended responses",
+      list: [
+        ["nlg",  "Evaluating evaluation metrics for natural language responses"],
+        ["intv", "Selecting questions in personality interviews"]
+      ]},
+    { id: "eye", title: "Eye-tracking data",
+      list: [ ["eye", "Integrating structured and unstructured eye-tracking data"] ] }
+  ]},
+  { id: "lvm", title: "Latent variable modeling",
+    extra: [
+      { kind: "Review", pid: "cwz20" },
+      { kind: "Data repository", pid: "irw25", html: "<a href=\"https://itemresponsewarehouse.org/\">Item Response Warehouse</a>, an open-source repository for item response data sets." }
+    ],
+    children: [
+    { id: "rt", title: "Response times", children: [
+      { id: "rtmiss",  title: "Missing data", list: [ ["miss", "Modeling omitted and not-reached items in timed tests"] ] },
+      { id: "rtsec",   title: "Test security", list: [ ["sec24", "Detecting compromised items with response times"] ] },
+      { id: "rtflex",  title: "Flexible latent structures", list: [ ["speed", "Modeling speed and accuracy jointly"] ] },
+      { id: "rtlearn", title: "Learning", list: [ ["rtlearn", "Tracking skill acquisition with response times"] ] }
+    ]},
+    { id: "sec", title: "Test security",
+      list: [
+        ["sec22", "Detecting compromised items from responses"],
+        ["sec24", "Detecting compromised items with response times"]
+      ]},
+    { id: "dcm", title: "Diagnostic models and learning",
+      list: [
+        ["hmm",     "Tracking skill acquisition over time"],
+        ["rtlearn", "Tracking skill acquisition with response times"],
+        ["testlet", "Accommodating testlets"],
+        ["qmat",    "Specifying and statistically refining the Q-matrix of a diagnostic model"]
+      ],
+      extra: [
+        { kind: "Software", html: "<a href=\"https://github.com/tmsalab/hmcdm\">hmcdm</a>, an R package for fitting hidden Markov cognitive diagnosis models to longitudinal learning data." },
+        { kind: "Review", pid: "zly22" }
+      ]},
+    { id: "ident", title: "Identifiability",
+      list: [
+        ["bif",     "Bifactor and two-tier models"],
+        ["testlet", "Diagnostic classification models with testlets"]
+      ]},
+    { id: "est", title: "Estimation",
+      list: [
+        ["fpl",   "Four-parameter logistic model estimation"],
+        ["mcmc",  "MCMC stopping rules for latent variable models"],
+        ["irtai", "Performance of IRT estimators in AI evaluation"]
+      ]}
+  ]},
+  { id: "ai", title: "AI evaluation",
+    list: [
+      ["nlg",     "Evaluating evaluation metrics for natural language responses"],
+      ["irtai",   "Performance of IRT estimators in AI evaluation"],
+      ["release", "Item-level evaluation data releases"]
+    ],
+    extra: [
+      { kind: "Data repository", html: "<a href=\"https://open-eval.github.io/\">OpenEval</a>, an open-source, item-level repository for AI evaluations." },
+      { kind: "Media coverage", html: "<a href=\"https://www.science.org/content/article/can-researchers-bring-order-confusing-world-ai-benchmarks\">Can researchers bring order to the confusing world of AI \u2018benchmarks\u2019?</a> <em>Science</em>, Nov. 10, 2026." }
+    ]},
+  { id: "llm", title: "LLM-assisted measurement",
+    list: [
+      ["qmat", "Specifying and statistically refining the Q-matrix of a diagnostic model"],
+      ["intv", "Selecting questions in personality interviews"]
+    ]}
+];
+
+/* ---------- Rendering ---------- */
+function own(cite) { return cite.replace("Zhang, S.", "<strong>Zhang, S.</strong>"); }
+function citeHtml(pid) {
+  const p = papers[pid];
+  if (!p.url) return own(p.cite);
+  const label = p.url.indexOf("doi.org") > -1 ? "DOI" : (p.url.indexOf("arxiv.org") > -1 ? "arXiv" : "Link");
+  return own(p.cite) + " <a class=\"plink\" href=\"" + p.url + "\">" + label + "</a>";
+}
+
+function yearOf(pid) { return Number(papers[pid].cite.match(/\((\d{4})\)/)[1]); }
+function entryYear(entry) { return Math.max.apply(null, items[entry[0]].map(yearOf)); }
+function nodeYear(node) {
+  const years = (node.list || []).map(entryYear).concat((node.children || []).map(nodeYear));
+  return Math.max.apply(null, years);
+}
+function sortByRecency(node) {
+  (node.list || []).forEach(function (entry) {
+    items[entry[0]].sort(function (a, b) { return yearOf(b) - yearOf(a); });
+  });
+  if (node.list) node.list.sort(function (a, b) { return entryYear(b) - entryYear(a); });
+  if (node.children) {
+    node.children.forEach(sortByRecency);
+    node.children.sort(function (a, b) { return nodeYear(b) - nodeYear(a); });
+  }
+}
+tree.forEach(sortByRecency);
+
+const placements = {};
+const themesOf = {};
+function addTheme(pid, top) {
+  if (!themesOf[pid]) themesOf[pid] = [];
+  if (themesOf[pid].indexOf(top) === -1) themesOf[pid].push(top);
+}
+function collect(node, path) {
+  const here = path.concat(node.title);
+  (node.list || []).forEach(function (entry) {
+    const key = entry[0];
+    if (!placements[key]) placements[key] = [];
+    placements[key].push({ dom: node.id + "--" + key, label: here.slice(-2).join(" \u203A ") });
+    items[key].forEach(function (pid) { addTheme(pid, here[0]); });
+  });
+  (node.extra || []).forEach(function (ex) { if (ex.pid) addTheme(ex.pid, here[0]); });
+  (node.children || []).forEach(function (child) { collect(child, here); });
+}
+tree.forEach(function (node) { collect(node, []); });
+
+function paperHtml(pid) {
+  return "<div class=\"paper\"><p class=\"cite\">" + citeHtml(pid) + "</p></div>";
+}
+
+function itemHtml(entry, branchId) {
+  const key = entry[0];
+  const domId = branchId + "--" + key;
+  const others = placements[key].filter(function (pl) { return pl.dom !== domId; });
+  let also = "";
+  if (others.length > 0) {
+    also = "<div class=\"also\"><span>Also under</span>" + others.map(function (pl) {
+      return "<button type=\"button\" data-goto=\"" + pl.dom + "\">" + pl.label + "</button>";
+    }).join("") + "</div>";
+  }
+  return "<article class=\"q\" id=\"" + domId + "\"><h4>" + entry[1] + "</h4>" + also + items[key].map(paperHtml).join("") + "</article>";
+}
+
+function extraHtml(node) {
+  if (!node.extra) return "";
+  return "<ul class=\"extra\">" + node.extra.map(function (ex) {
+    const text = (ex.html ? ex.html + " " : "") + (ex.pid ? citeHtml(ex.pid) : "");
+    return "<li><span class=\"kind\">" + ex.kind + "</span>" + text + "</li>";
+  }).join("") + "</ul>";
+}
+
+function bodyHtml(node) {
+  return (node.list || []).map(function (entry) { return itemHtml(entry, node.id); }).join("")
+    + (node.children || []).map(branchHtml).join("")
+    + extraHtml(node);
+}
+
+function branchHtml(node) {
+  return "<details class=\"branch\" open><summary>" + node.title + "</summary>" + bodyHtml(node) + "</details>";
+}
+
+document.getElementById("tree").innerHTML = tree.map(function (node) {
+  return "<section class=\"theme\" id=\"sec-" + node.id + "\"><h2>" + node.title + "</h2>" + bodyHtml(node) + "</section>";
+}).join("");
+
+document.getElementById("jump").innerHTML = tree.map(function (node) {
+  return "<button type=\"button\" data-goto=\"sec-" + node.id + "\">" + node.title + "</button>";
+}).join("");
+
+/* By-year view: each paper once, with the top-level themes it appears under. */
+const byYear = {};
+Object.keys(papers).forEach(function (pid) {
+  const year = papers[pid].cite.match(/\((\d{4})\)/)[1];
+  if (!byYear[year]) byYear[year] = [];
+  byYear[year].push(pid);
+});
+document.getElementById("view-papers").innerHTML = Object.keys(byYear).sort().reverse().map(function (year) {
+  return "<h2 class=\"year\">" + year + "</h2><ul class=\"yl\">" + byYear[year].map(function (pid) {
+    const chips = (themesOf[pid] || []).map(function (t) { return "<span class=\"chip\">" + t + "</span>"; }).join("");
+    return "<li>" + citeHtml(pid) + " " + chips + "</li>";
+  }).join("") + "</ul>";
+}).join("");
+
+/* Jump buttons and cross-links */
+document.addEventListener("click", function (event) {
+  const button = event.target.closest("button[data-goto]");
+  if (!button) return;
+  const target = document.getElementById(button.dataset.goto);
+  let parent = target.parentElement;
+  while (parent) { if (parent.tagName === "DETAILS") parent.open = true; parent = parent.parentElement; }
+  target.scrollIntoView({ block: "start" });
+  if (target.classList.contains("q")) {
+    target.classList.add("flash");
+    setTimeout(function () { target.classList.remove("flash"); }, 1600);
+  }
+});
+
+/* Light and dark switch: starts from the visitor's setting */
+const root = document.documentElement;
+const themeSwitch = document.getElementById("theme-switch");
+function isDark() {
+  if (root.dataset.theme) return root.dataset.theme === "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+const sunIcon = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4\"/></svg>";
+const moonIcon = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z\"/></svg>";
+function labelSwitch() {
+  themeSwitch.innerHTML = isDark() ? sunIcon : moonIcon;
+  themeSwitch.setAttribute("aria-label", isDark() ? "Switch to light mode" : "Switch to dark mode");
+}
+themeSwitch.addEventListener("click", function () {
+  root.dataset.theme = isDark() ? "light" : "dark";
+  labelSwitch();
+});
+labelSwitch();
+
+/* Pages and views, routed on the hash */
+function showView() {
+  const route = location.hash.replace("#", "") || "home";
+  const pages = ["home", "research", "teaching", "stat-428", "psyc-490"];
+  let page = "home";
+  if (route.indexOf("research") === 0) page = "research";
+  if (pages.indexOf(route) > -1) page = route;
+  pages.forEach(function (name) { document.getElementById("page-" + name).hidden = name !== page; });
+  const section = (page === "stat-428" || page === "psyc-490") ? "teaching" : page;
+  ["home", "research", "teaching"].forEach(function (name) { document.getElementById("nav-" + name).removeAttribute("aria-current"); });
+  document.getElementById("nav-" + section).setAttribute("aria-current", "page");
+  const byYear = route === "research-by-year";
+  document.getElementById("view-topics").hidden = byYear;
+  document.getElementById("view-papers").hidden = !byYear;
+  document.getElementById("tab-topics").removeAttribute("aria-current");
+  document.getElementById("tab-papers").removeAttribute("aria-current");
+  document.getElementById(byYear ? "tab-papers" : "tab-topics").setAttribute("aria-current", "page");
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", showView);
+showView();
+</script>
+</body>
+</html>
